@@ -3,7 +3,7 @@ from azure.storage.blob import BlobServiceClient
 from azure.data.tables import TableServiceClient
 from typing import Dict, List, Optional
 
-from encryption import decrypt_key, decrypt_stream_to_file, encrypt_key, encrypt_stream
+from encryption import decrypt_key, decrypt_stream_to_file, encrypt_key, encrypt_stream_from_file
 
 class AzureStorageManager:
     def __init__(self, account_name: str, accesskey: str, partition_key: str):
@@ -63,7 +63,7 @@ class AzureStorageManager:
         else:
             prefix = prefix.replace("/", "|")
             start = prefix
-            end = prefix[:-1] + chr(ord(prefix[-1]) + 1)  # napr. 'abc' → 'abd'
+            end = prefix[:-1] + chr(ord(prefix[-1]) + 1)  # e.g. 'abc' → 'abd'
             file_list = self.table_client.query_entities(query_filter=f"PartitionKey eq '{self.partition_key}' and RowKey ge '{start}' and RowKey lt '{end}'")
         return file_list
 
@@ -84,9 +84,8 @@ class AzureStorageManager:
 
     def upload_blob(self, file_hash: str, filepath: str, aes_key: bytes):
         print(f"New file: {filepath}")
-        with open(filepath, 'rb') as f:
-            encrypted_stream = encrypt_stream(f, aes_key)
-            self.container_client.upload_blob(file_hash, encrypted_stream)
+        encrypted_stream = encrypt_stream_from_file(filepath, aes_key)
+        self.container_client.upload_blob(file_hash, encrypted_stream)
 
     def download_blob(self, file_hash: str, filepath: str, aes_key: bytes):
         """Download a blob from Azure Storage."""

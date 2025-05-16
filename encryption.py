@@ -9,7 +9,7 @@ import os
 import hashlib
 
 BLOCK_SIZE = 16
-CHUNK_SIZE = 16 * 1024  # násobok 16
+CHUNK_SIZE = 16 * 1024  # multiple of 16
 
 def decrypt_key(key_row: Dict, password: str) -> bytes:
     # ===== Load data =====
@@ -55,27 +55,28 @@ def derive_password_key(password: str, salt: bytes) -> bytes:
     )
     return kdf.derive(password.encode())
 
-def encrypt_stream(input_stream, key: bytes):
-    """Šifruje vstupný stream pomocou AES-256-CBC. Vracia generator šifrovaných chunkov (IV + ciphertext)."""
+def encrypt_stream_from_file(filepath: str, key: bytes):
+    """Encrypts input stream using AES-256-CBC. Returns a generator of encrypted chunks (IV + ciphertext)."""
     iv = os.urandom(BLOCK_SIZE)
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
     encryptor = cipher.encryptor()
     padder = padding.PKCS7(128).padder()
 
-    yield iv  # začni IV prefixom
+    yield iv  # start with IV prefix
 
-    while chunk := input_stream.read(CHUNK_SIZE):
-        padded = padder.update(chunk)
+    with open(filepath, "rb") as f:
+        while chunk := f.read(CHUNK_SIZE):
+            padded = padder.update(chunk)
         if padded:
             yield encryptor.update(padded)
 
-    # Zvyšné padding + finálny AES blok
+    # Remaining padding + final AES block
     final_padded = padder.finalize()
     yield encryptor.update(final_padded) + encryptor.finalize()
 
 
 def decrypt_stream_to_file(input_stream, filepath: str, key: bytes):
-    """Dešifruje AES-256-CBC šifrovaný stream a uloží výsledok do súboru."""
+    """Decrypts AES-256-CBC encrypted stream and saves the result to a file."""
     iv = input_stream.read(BLOCK_SIZE)
     cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
     decryptor = cipher.decryptor()
@@ -94,7 +95,7 @@ def decrypt_stream_to_file(input_stream, filepath: str, key: bytes):
                 decrypted = decryptor.update(block)
                 f_out.write(unpadder.update(decrypted))
 
-        # finálne bloky + unpadding
+        # final blocks + unpadding
         decrypted = decryptor.update(buffer) + decryptor.finalize()
         unpadded = unpadder.update(decrypted) + unpadder.finalize()
         f_out.write(unpadded)
