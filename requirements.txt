@@ -1,0 +1,5 @@
+azure-storage-blob>=12.19.0
+azure-data-tables>=12.4.4
+cryptography>=42.0.0
+tqdm>=4.66.0
+python-dotenv>=1.0.0 
