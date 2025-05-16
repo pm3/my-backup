@@ -16,7 +16,7 @@ class AzureStorageManager:
         # Ensure containers and tables exist
         self.container_client = self.blob_service_client.get_container_client("files")
         
-        self.table_client = self.table_service_client.get_table_client("filemetadata2")
+        self.table_client = self.table_service_client.get_table_client("filemetadata")
         
         # Create encryption key table if it doesn't exist
         self.key_table_client = self.table_service_client.get_table_client("encryptionkeys")
