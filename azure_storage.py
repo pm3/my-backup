@@ -85,7 +85,8 @@ class AzureStorageManager:
     def upload_blob(self, file_hash: str, filepath: str, aes_key: bytes):
         print(f"New file: {filepath}")
         encrypted_stream = encrypt_stream_from_file(filepath, aes_key)
-        self.container_client.upload_blob(file_hash, encrypted_stream)
+        blob_client = self.container_client.upload_blob(file_hash, encrypted_stream)
+        blob_client.set_standard_blob_tier("Archive")
 
     def download_blob(self, file_hash: str, filepath: str, aes_key: bytes):
         """Download a blob from Azure Storage."""

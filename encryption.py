@@ -67,8 +67,8 @@ def encrypt_stream_from_file(filepath: str, key: bytes):
     with open(filepath, "rb") as f:
         while chunk := f.read(CHUNK_SIZE):
             padded = padder.update(chunk)
-        if padded:
-            yield encryptor.update(padded)
+            if padded:
+                yield encryptor.update(padded)
 
     # Remaining padding + final AES block
     final_padded = padder.finalize()
