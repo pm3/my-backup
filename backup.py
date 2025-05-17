@@ -2,6 +2,7 @@
 import argparse
 import datetime
 import os
+import time
 from typing import Dict
 from azure_storage import AzureStorageManager
 from encryption import calculate_file_hash
@@ -20,6 +21,9 @@ def backup(directory: str, account: str, accesskey: str, password: str, partitio
     files = storage_manager.list_files("")
     file_map = {file["RowKey"]: file for file in files}
     
+    total_size = 0
+    start_time = time.time()
+
     # Process all files in directory
     for root, _, files in os.walk(directory):
         for filename in files:
@@ -27,9 +31,15 @@ def backup(directory: str, account: str, accesskey: str, password: str, partitio
                 filepath = os.path.join(root, filename)
                 filekey = os.path.relpath(filepath, directory)
                 file_metadata = file_map.get(filekey.replace("/", "|"))
-                process_file(filekey, filepath, file_metadata, aes_key, storage_manager)
+                file_size = process_file(filekey, filepath, file_metadata, aes_key, storage_manager)
+                total_size += file_size
             except Exception as e:
                 print(f"Error processing {filename}: {str(e)}")
+    
+    end_time = time.time()
+    print(f"Total time: {end_time - start_time} seconds")
+    print(f"Total size: {total_size / 1024 / 1024} MB")
+    print(f"Average speed: {total_size / (end_time - start_time) / 1024 / 1024} MB/s")
 
 def process_file(filekey: str, filepath: str, metadata: Dict | None, aes_key: bytes, storage_manager: AzureStorageManager):
     """Process a single file for backup."""
@@ -45,9 +55,11 @@ def process_file(filekey: str, filepath: str, metadata: Dict | None, aes_key: by
         else:
             storage_manager.upload_blob(current_hash, filepath, aes_key)
         storage_manager.update_file_metadata(filekey, {"Hash": current_hash, "ModifiedDate": modified_date, "Size": file_size})
+        return file_size
     else:
         # File unchanged
         print(f"Skipping unchanged file: {filekey}")
+        return 0
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Backup files to Azure Storage with encryption')
