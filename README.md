@@ -1,6 +1,6 @@
 # Secure Azure Backup System
 
-A secure and efficient backup solution that stores files in Azure Blob Storage with encryption and deduplication.
+A secure and efficient backup solution that stores files in Azure Blob Storage with encryption and deduplication. The system is designed to work on both Windows and Linux platforms, and is optimized for resource-constrained devices like Raspberry Pi.
 
 ## Features
 
@@ -79,6 +79,15 @@ python change_password.py --account mystorage --accesskey abc123 --old-password 
   - azure-storage-blob
   - azure-storage-table
   - cryptography
+
+## Platform Support
+
+- **Windows**: Fully supported on Windows 10 and later
+- **Linux**: Compatible with all major Linux distributions
+- **Small Devices**: Optimized for resource-constrained devices like Raspberry Pi
+  - Memory-efficient operations
+  - Minimal CPU usage
+  - Efficient network utilization
 
 ## Installation
 
