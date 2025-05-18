@@ -16,14 +16,15 @@ def restore(account: str, accesskey: str, password: str, partition: str, directo
     #load all files with the prefix        
     files = storage_manager.list_files(prefix)
     for file in files:
-        file_path = os.path.join(directory, file['RowKey'].replace("|", "/"))
+        file_key = file['RowKey'].replace("|", "/")
+        file_path = os.path.join(directory, file_key)
         #create the directory if it doesn't exist
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         #download the file
         if os.path.exists(file_path) and file['Size'] == os.path.getsize(file_path):
-            print(f"Skipping existing file: {file_path}")
+            print(f"Skipping existing file: {file_key}")
         else:
-            print(f"Restoring {file['RowKey'].replace("|", "/")}")
+            print(f"Restoring {file_key}")
             storage_manager.download_blob(file['Hash'], file_path, aes_key)
         # try:
         # except Exception as e:

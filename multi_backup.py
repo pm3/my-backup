@@ -20,4 +20,4 @@ if __name__ == "__main__":
 
     for directory in directories:
         print(f"Backing up {directory}")
-        backup(os.path.join(args.root, directory), args.account, args.accesskey, args.password, directory)
+        backup.backup(os.path.join(args.root, directory), args.account, args.accesskey, args.password, directory)

@@ -61,7 +61,7 @@ class AzureStorageManager:
         if prefix is None or len(prefix) == 0:
             file_list = self.table_client.query_entities(query_filter=f"PartitionKey eq '{self.partition_key}'", results_per_page=1000)
         else:
-            prefix = prefix.replace("/", "|")
+            prefix = prefix.replace("/", "|").replace("\\", "|")
             start = prefix
             end = prefix[:-1] + chr(ord(prefix[-1]) + 1)  # e.g. 'abc' → 'abd'
             file_list = self.table_client.query_entities(query_filter=f"PartitionKey eq '{self.partition_key}' and RowKey ge '{start}' and RowKey lt '{end}'")
@@ -71,7 +71,7 @@ class AzureStorageManager:
         """Update file metadata in the table."""
         entity = {
             "PartitionKey": self.partition_key,
-            "RowKey": filename.replace("/", "|"),
+            "RowKey": filename.replace("/", "|").replace("\\", "|"),
             **metadata
         }
         self.table_client.upsert_entity(entity)

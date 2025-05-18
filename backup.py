@@ -10,8 +10,8 @@ import sys
 
 def backup(directory: str, account: str, accesskey: str, password: str, partition: str):
     
-    if not os.path.isdir(args.directory):
-        print(f"Error: {args.directory} is not a valid directory")
+    if not os.path.isdir(directory):
+        print(f"Error: {directory} is not a valid directory")
         sys.exit(1)
     
     # Initialize storage manager
@@ -30,7 +30,7 @@ def backup(directory: str, account: str, accesskey: str, password: str, partitio
             try:
                 filepath = os.path.join(root, filename)
                 filekey = os.path.relpath(filepath, directory)
-                file_metadata = file_map.get(filekey.replace("/", "|"))
+                file_metadata = file_map.get(filekey.replace("/", "|").replace("\\", "|"))
                 file_size = process_file(filekey, filepath, file_metadata, aes_key, storage_manager)
                 total_size += file_size
             except Exception as e:
@@ -44,14 +44,15 @@ def backup(directory: str, account: str, accesskey: str, password: str, partitio
 def process_file(filekey: str, filepath: str, metadata: Dict | None, aes_key: bytes, storage_manager: AzureStorageManager):
     """Process a single file for backup."""
     print(f"Processing {filekey} {filepath}")
-    current_hash = calculate_file_hash(filepath)
     modified_date = datetime.datetime.fromtimestamp(os.path.getmtime(filepath))
     file_size = os.path.getsize(filepath)
-        
-    if metadata is None or metadata["Hash"] != current_hash:
+    #compare dates, ignore timezone
+    if metadata is None or metadata["Size"] != file_size or metadata["ModifiedDate"].replace(tzinfo=None) != modified_date.replace(tzinfo=None):
         # New file
-        if storage_manager.check_if_blob_exists(current_hash):
+        current_hash = calculate_file_hash(filepath)
+        if storage_manager.check_if_blob_exists(filekey):
             print(f"Skipping existing blob: {current_hash}")
+            return 0
         else:
             storage_manager.upload_blob(current_hash, filepath, aes_key)
         storage_manager.update_file_metadata(filekey, {"Hash": current_hash, "ModifiedDate": modified_date, "Size": file_size})
